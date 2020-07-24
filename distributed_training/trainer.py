@@ -3,12 +3,13 @@ from datetime import datetime
 import argparse
 import tqdm
 from apex import amp
-from apex.parallel import DistributedDataParallel
+from apex.parallel import DistributedDataParallel as DDP
 
 import torchvision
 import torchvision.transforms as transforms
 import torch
 import torch.nn as nn
+import torch.distributed as dist
 
 
 class ConvNet(nn.Module):
@@ -36,10 +37,14 @@ class ConvNet(nn.Module):
 def train(args):
 	torch.manual_seed(0)
 
+	args.world_size = 1
 	if args.distributed:
 	    torch.cuda.set_device(args.local_rank)
 	    torch.distributed.init_process_group(backend='nccl',
 	                                         init_method='env://')
+	    args.world_size = torch.distributed.get_world_size()
+
+	assert torch.backends.cudnn.enabled, "Amp requires cudnn backend to be enabled."
 
 	torch.backends.cudnn.benchmark = True
 
@@ -54,9 +59,9 @@ def train(args):
 
 
 	if args.distributed:
-		model = DistributedDataParallel(model)
+		model = DDP(model, delay_allreduce=True)
 
-	loss_fn = nn.CrossEntropyLoss()
+	loss_fn = nn.CrossEntropyLoss().cuda()
 
 	# Data loading code
 	train_dataset = torchvision.datasets.MNIST(root='./data',
@@ -83,11 +88,7 @@ def train(args):
 		for i, (images, labels) in enumerate(train_loader):
 			images = images.cuda(non_blocking=True)
 			labels = labels.cuda(non_blocking=True)
-
-
 			outputs = model(images)
-
-
 			optimizer.zero_grad()
 			loss = loss_fn(outputs, labels)
 			with amp.scale_loss(loss, optimizer) as scaled_loss:
@@ -102,8 +103,20 @@ def train(args):
 					total_step,
 					loss.item())
 					)
-	if args.local_rank == 0:
-	    print("Training complete in: " + str(datetime.now() - start))
+		print(loss.data)
+
+		# Collect loss from all processes
+		reduced_loss = reduce_tensor(loss.data)
+
+		if args.local_rank == 0:
+		    print("Training complete in: " + str(datetime.now() - start))
+		    print(reduced_loss)
+
+def reduce_tensor(tensor):
+    rt = tensor.clone()
+    dist.all_reduce(rt, op=dist.ReduceOp.SUM)
+    rt /= 2
+    return rt
 
 def main():
 	parser = argparse.ArgumentParser()
