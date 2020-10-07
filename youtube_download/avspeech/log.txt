@@ -1,0 +1,1 @@
+slurmstepd: error: *** JOB 293769 ON ttnusa7 CANCELLED AT 2020-06-17T22:13:54 ***

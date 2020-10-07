@@ -1,0 +1,9 @@
+Using TensorFlow backend.
+WARNING:tensorflow:From /data_a8/zexu/home/Application/anaconda3/envs/cv/lib/python3.6/site-packages/tensorflow/python/ops/resource_variable_ops.py:435: colocate_with (from tensorflow.python.framework.ops) is deprecated and will be removed in a future version.
+Instructions for updating:
+Colocations handled automatically by placer.
+2020-06-17 22:11:14.800664: I tensorflow/core/platform/cpu_feature_guard.cc:141] Your CPU supports instructions that this TensorFlow binary was not compiled to use: SSE4.1 SSE4.2 AVX AVX2 FMA
+2020-06-17 22:11:14.826622: I tensorflow/core/platform/profile_utils/cpu_utils.cc:94] CPU Frequency: 2394480000 Hz
+2020-06-17 22:11:14.827006: I tensorflow/compiler/xla/service/service.cc:150] XLA service 0x557dbb629ec0 executing computations on platform Host. Devices:
+2020-06-17 22:11:14.827041: I tensorflow/compiler/xla/service/service.cc:158]   StreamExecutor device (0): <undefined>, <undefined>
+  0%|          | 0/10000 [00:00<?, ?it/s]  0%|          | 1/10000 [00:52<146:04:28, 52.59s/it]
