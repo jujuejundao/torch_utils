@@ -1,2 +1,4 @@
 data/
 **/egs/*
+**/.DS_Store
+**/._*
